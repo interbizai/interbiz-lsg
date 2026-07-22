@@ -1,24 +1,37 @@
 # Asme — Hero Landing Page
 
-풀스크린 루프 배경 영상 + 리퀴드 글라스 UI의 다크 시네마틱 히어로 섹션입니다.
-Vite + React 18 + TypeScript + Tailwind CSS 3 + lucide-react로 만들었고, 페이지 전체가 `src/App.tsx` 하나에 들어 있습니다.
+풀스크린 루프 배경 영상 + 리퀴드 글라스 UI의 다크 시네마틱 히어로 섹션.
+Vite + React 18 + TypeScript + Tailwind CSS 3 + lucide-react.
 
-## 실행 방법
+## 실행
 
 ```bash
 npm install
-npm run dev      # 개발 서버 (http://localhost:5173)
-npm run build    # 프로덕션 빌드
-npm run preview  # 빌드 결과 미리보기
+npm run dev      # 개발 서버 → http://localhost:5173
+npm run build    # 타입체크 + 프로덕션 빌드 (dist/)
+npm run preview  # 빌드 결과 미리보기 → http://localhost:4173
 ```
 
-## 구성
+## 폴더 구조
 
-- **배경 영상** — 풀스크린 muted 자동재생, `object-cover`, 아래로 17% 이동(상단 크롭). 루프 경계는 CSS 트랜지션 없이 `requestAnimationFrame` 기반 500ms 페이드 인/아웃으로 부드럽게 처리 (끝나기 0.55초 전 페이드아웃 → `ended` 후 100ms 뒤 처음부터 재생 + 페이드인)
-- **리퀴드 글라스** — `src/index.css`의 `.liquid-glass` 클래스 (luminosity 블렌드 + blur(4px) + 마스크 트릭으로 만든 그라데이션 보더)
-- **레이아웃** — 상단 내비게이션(Asme 로고, Features/Pricing/About, Sign Up/Login), 중앙 히어로("Built for the curious" + 이메일 구독 바 + Manifesto 버튼), 하단 소셜 아이콘(Instagram/Twitter/Globe)
-- **폰트** — 제목에 Google Font "Instrument Serif" 사용
+```
+public/asme-hero.mp4   배경 영상 (로컬 파일, 외부 CDN 의존 없음)
+src/App.tsx            페이지 전체 (내비 · 히어로 · 소셜 푸터)
+src/index.css          Instrument Serif @import + Tailwind + .liquid-glass
+index.html             진입 HTML
+tailwind.config.js     Tailwind 설정 (기본, 확장 없음)
+```
 
-## 배경 영상 교체
+## 자주 바꾸는 것
 
-`src/App.tsx` 상단의 `VIDEO_URL` 상수만 바꾸면 됩니다.
+| 바꿀 내용 | 위치 |
+| --- | --- |
+| 배경 영상 | `public/asme-hero.mp4` 교체, 또는 `src/App.tsx`의 `VIDEO_URL` |
+| 히어로 문구 · 버튼 · 링크 | `src/App.tsx` JSX |
+| 리퀴드 글라스 스타일 | `src/index.css`의 `.liquid-glass` |
+| 영상 페이드 타이밍 | `src/App.tsx`의 `FADE_MS`, `FADE_OUT_LEAD_S` |
+
+## 배경 영상 동작
+
+`src/App.tsx`가 CSS 트랜지션 없이 `requestAnimationFrame` 기반으로 루프 경계를 페이드 처리합니다:
+로드/재시작 시 500ms 페이드인, 종료 0.55초 전 500ms 페이드아웃, `ended` 후 100ms 뒤 처음부터 재생.
