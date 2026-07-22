@@ -1,7 +1,7 @@
-# AI, 질문에서 업무로 — 사내 발표용 사이트
+# Asme — Hero Landing Page
 
-25–30분 발표를 위한 싱글 페이지 프레젠테이션 사이트입니다.
-Vite + React + TypeScript + Tailwind CSS로 만들었고, 페이지 전체가 `src/App.tsx` 하나에 들어 있습니다.
+풀스크린 루프 배경 영상 + 리퀴드 글라스 UI의 다크 시네마틱 히어로 섹션입니다.
+Vite + React 18 + TypeScript + Tailwind CSS 3 + lucide-react로 만들었고, 페이지 전체가 `src/App.tsx` 하나에 들어 있습니다.
 
 ## 실행 방법
 
@@ -14,28 +14,11 @@ npm run preview  # 빌드 결과 미리보기
 
 ## 구성
 
-| 화면 | 내용 |
-| --- | --- |
-| 홈 | 로봇 손 배경 영상 + "AI, 질문에서 업무로" 히어로 |
-| 01 프로젝트 | 직접 만든 사이트 3개 리뷰 (라이브 미리보기 포함) |
-| 02 AI 팁 | 프롬프트 습관 6가지 + 라이브 데모 안내 |
-| 03 바이브코딩 | 정의 · 4단계 진행 방식 · 실전 수칙 |
-| 04 AI 활용 | 활용 영역 · 프롬프트 공식 · MCP · 자동화 |
+- **배경 영상** — 풀스크린 muted 자동재생, `object-cover`, 아래로 17% 이동(상단 크롭). 루프 경계는 CSS 트랜지션 없이 `requestAnimationFrame` 기반 500ms 페이드 인/아웃으로 부드럽게 처리 (끝나기 0.55초 전 페이드아웃 → `ended` 후 100ms 뒤 처음부터 재생 + 페이드인)
+- **리퀴드 글라스** — `src/index.css`의 `.liquid-glass` 클래스 (luminosity 블렌드 + blur(4px) + 마스크 트릭으로 만든 그라데이션 보더)
+- **레이아웃** — 상단 내비게이션(Asme 로고, Features/Pricing/About, Sign Up/Login), 중앙 히어로("Built for the curious" + 이메일 구독 바 + Manifesto 버튼), 하단 소셜 아이콘(Instagram/Twitter/Globe)
+- **폰트** — 제목에 Google Font "Instrument Serif" 사용
 
-### 발표 조작
+## 배경 영상 교체
 
-- **이동**: 마우스 스크롤, 상단 메뉴, 우측 점 인디케이터, 방향키(↑↓←→) / PageUp·Down / Space
-- **메인 화면 로봇손**: 첫 화면의 배경 영상 속 로봇손이 마우스 커서에 연동돼 부드럽게 움직이고, 클릭하면 살짝 눌리는 반응을 합니다 (첫 화면에서만 동작)
-- **기계음**: 클릭 틱 + 화면 전환 서보 사운드 — 우측 상단 스피커 버튼으로 켜고 끌 수 있습니다
-
-## 문구 수정 위치
-
-발표 문구는 전부 `src/App.tsx` 상단의 데이터 상수에 모여 있습니다. **소개 문구는 초안이므로 실제 내용에 맞게 다듬어 주세요.**
-
-| 수정할 내용 | 위치 (`src/App.tsx`) |
-| --- | --- |
-| 사이트 3개 이름·소개·불릿 | `PROJECTS` |
-| AI 사용 팁 6가지 | `TIPS` |
-| 바이브코딩 단계·도구·수칙 | `VIBE_STEPS`, `VIBE_TOOLS`, `VIBE_RULES` |
-| 활용 영역·프롬프트 공식·MCP·자동화 | `AI_AREAS`, `PROMPT_FORMULA`, `MCP_EXAMPLES`, `AUTOMATION_EXAMPLES` |
-| 히어로 문구·메뉴 이름 | 히어로 섹션 JSX, `SECTIONS` |
+`src/App.tsx` 상단의 `VIDEO_URL` 상수만 바꾸면 됩니다.
