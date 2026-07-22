@@ -278,175 +278,6 @@ function Logo() {
 }
 
 /* ============================================================
-   로봇 팔 커서 — 화면 아래에서 뻗어 나온 로봇 손의 검지가
-   마우스를 따라다니고, 클릭하면 콕 누르는 동작을 한다.
-   ============================================================ */
-
-type Ripple = { id: number; x: number; y: number }
-
-function RobotArm() {
-  const [enabled, setEnabled] = useState(false)
-  const [ripples, setRipples] = useState<Ripple[]>([])
-
-  const forearm = useRef<SVGLineElement | null>(null)
-  const forearmHi = useRef<SVGLineElement | null>(null)
-  const hand = useRef<SVGGElement | null>(null)
-
-  useEffect(() => {
-    const fine = window.matchMedia('(pointer: fine)').matches
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    if (fine && !reduced && window.innerWidth >= 768) setEnabled(true)
-  }, [])
-
-  useEffect(() => {
-    if (!enabled) return
-    document.documentElement.classList.add('hand-active')
-
-    const target = { x: window.innerWidth / 2, y: window.innerHeight * 0.42 }
-    const pos = { ...target }
-    let press = 0
-    let raf = 0
-
-    const onMove = (e: PointerEvent) => {
-      target.x = e.clientX
-      target.y = e.clientY
-    }
-    const onDown = (e: PointerEvent) => {
-      press = 1
-      audio.click()
-      const id = Date.now() + Math.random()
-      setRipples((r) => [...r.slice(-4), { id, x: e.clientX, y: e.clientY }])
-      window.setTimeout(() => setRipples((r) => r.filter((p) => p.id !== id)), 600)
-    }
-    window.addEventListener('pointermove', onMove, { passive: true })
-    window.addEventListener('pointerdown', onDown)
-
-    const setLine = (
-      el: SVGLineElement | null,
-      x1: number,
-      y1: number,
-      x2: number,
-      y2: number,
-    ) => {
-      if (!el) return
-      el.setAttribute('x1', String(x1))
-      el.setAttribute('y1', String(y1))
-      el.setAttribute('x2', String(x2))
-      el.setAttribute('y2', String(y2))
-    }
-
-    const step = () => {
-      pos.x += (target.x - pos.x) * 0.3
-      pos.y += (target.y - pos.y) * 0.3
-      press *= 0.85
-
-      const vw = window.innerWidth
-      const vh = window.innerHeight
-
-      // 손은 영상 속 손처럼 세워진 채로, 위치와 이동 방향에 따라 살짝만 기운다
-      const lean = ((pos.x - vw / 2) / (vw / 2)) * 10 + (target.x - pos.x) * 0.05
-      const tilt = Math.max(-14, Math.min(14, lean))
-      const rad = (tilt * Math.PI) / 180
-      const cos = Math.cos(rad)
-      const sin = Math.sin(rad)
-
-      // 클릭하면 검지가 가리키는 방향으로 콕 들어간다
-      const poke = press * 10
-      const tipX = pos.x + sin * poke
-      const tipY = pos.y - cos * poke
-      hand.current?.setAttribute('transform', `translate(${tipX} ${tipY}) rotate(${tilt})`)
-
-      // 손목(로컬 25,150)에서 화면 아래로 이어지는 팔뚝
-      const wx = tipX + 25 * cos - 150 * sin
-      const wy = tipY + 25 * sin + 150 * cos
-      const by = vh + 60
-      const bx = wx - sin * ((by - wy) / cos)
-      setLine(forearm.current, wx, wy, bx, by)
-      setLine(forearmHi.current, wx, wy, bx, by)
-
-      raf = requestAnimationFrame(step)
-    }
-    raf = requestAnimationFrame(step)
-
-    return () => {
-      cancelAnimationFrame(raf)
-      window.removeEventListener('pointermove', onMove)
-      window.removeEventListener('pointerdown', onDown)
-      document.documentElement.classList.remove('hand-active')
-    }
-  }, [enabled])
-
-  if (!enabled) return null
-
-  return (
-    <>
-      <svg
-        className="fixed inset-0 z-50 h-full w-full pointer-events-none"
-        style={{ filter: 'drop-shadow(0 10px 16px rgba(0, 0, 0, 0.12))' }}
-        aria-hidden
-      >
-        {/* 팔뚝 — 화면 아래 모서리에서 손목까지 */}
-        <line ref={forearm} stroke="#1c1c1c" strokeWidth={34} strokeLinecap="butt" />
-        <line ref={forearmHi} stroke="#3a3a3a" strokeWidth={2} strokeLinecap="butt" opacity={0.7} />
-        {/* 검은 로봇 손 — 세워진 채 검지 끝(0,0)이 커서 위치 */}
-        <g ref={hand}>
-          {/* 검지: 마디가 나뉜 세 조각 */}
-          <path
-            d="M -5.5 6 Q -5.5 0 0 0 Q 5.5 0 5.5 6 L 5.5 21 L -5.5 21 Z"
-            fill="#232323"
-            stroke="#0c0c0c"
-            strokeWidth={1}
-          />
-          <rect x={-6.5} y={23} width={13} height={19} rx={3} fill="#232323" stroke="#0c0c0c" strokeWidth={1} />
-          <rect x={-6.5} y={44} width={13} height={20} rx={3} fill="#232323" stroke="#0c0c0c" strokeWidth={1} />
-          {/* 손등 + 접힌 손가락 셋 (너클 실루엣) */}
-          <path
-            d="M -8 70
-               L -8 124 Q -8 138 6 138 L 44 138 Q 58 138 58 124 L 58 58
-               Q 58 44 47 44 L 40 46
-               Q 39 41 31 41 L 24 44
-               Q 22 39 15 40 L 9 44
-               L 6.5 48 L 6.5 64 Q -2 66 -8 70 Z"
-            fill="#262626"
-            stroke="#0c0c0c"
-            strokeWidth={1}
-          />
-          {/* 접힌 손가락 관절선 */}
-          <line x1={12} y1={44} x2={12} y2={58} stroke="#3a3a3a" strokeWidth={1.2} />
-          <line x1={27} y1={42} x2={27} y2={58} stroke="#3a3a3a" strokeWidth={1.2} />
-          <line x1={41} y1={45} x2={41} y2={58} stroke="#3a3a3a" strokeWidth={1.2} />
-          <path d="M 8 60 Q 30 66 56 58" fill="none" stroke="#3a3a3a" strokeWidth={1.2} />
-          {/* 엄지 — 손 앞을 가로지르는 곡선 */}
-          <path
-            d="M -6 76 Q -24 82 -26 96 Q -27 110 -16 113 Q -7 115 -4 106 Z"
-            fill="#2b2b2b"
-            stroke="#0c0c0c"
-            strokeWidth={1}
-          />
-          <path d="M -22 94 Q -20 104 -12 108" fill="none" stroke="#3a3a3a" strokeWidth={1.2} />
-          {/* 검지 관절 하이라이트 */}
-          <line x1={-4} y1={22} x2={4} y2={22} stroke="#3a3a3a" strokeWidth={1} />
-          <line x1={-4} y1={43} x2={4} y2={43} stroke="#3a3a3a" strokeWidth={1} />
-          {/* 손목 커프 + 메탈 링 */}
-          <rect x={7} y={137} width={36} height={9} rx={3} fill="#161616" />
-          <rect x={5} y={145} width={40} height={6} rx={3} fill="#b9b9b6" />
-          {/* 손끝 포인트 */}
-          <circle cx={0} cy={0} r={2.5} fill="#3b82f6" />
-        </g>
-      </svg>
-      {/* 클릭 리플 */}
-      {ripples.map((r) => (
-        <span
-          key={r.id}
-          className="animate-hand-ripple pointer-events-none fixed z-[60] h-10 w-10 rounded-full border-2 border-blue-500"
-          style={{ left: r.x, top: r.y }}
-        />
-      ))}
-    </>
-  )
-}
-
-/* ============================================================
    공통 섹션 헤더
    ============================================================ */
 
@@ -471,6 +302,7 @@ function SectionHeader({ no, kicker, title, sub }: { no: string; kicker: string;
 export default function App() {
   const scrollerRef = useRef<HTMLDivElement | null>(null)
   const sectionRefs = useRef<(HTMLElement | null)[]>([])
+  const videoRef = useRef<HTMLVideoElement | null>(null)
   const activeRef = useRef(0)
   const scrollRaf = useRef(0)
   const [activeIdx, setActiveIdx] = useState(0)
@@ -521,6 +353,51 @@ export default function App() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
+  // 히어로 영상 속 로봇손이 마우스 커서에 연동돼 부드럽게 움직인다 (첫 화면에서만)
+  useEffect(() => {
+    const fine = window.matchMedia('(pointer: fine)').matches
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (!fine || reduced) return
+    const target = { x: 0, y: 0 } // 화면 중앙 기준 -1 ~ 1
+    const cur = { x: 0, y: 0 }
+    let press = 0
+    let raf = 0
+    const onMove = (e: PointerEvent) => {
+      target.x = (e.clientX / window.innerWidth) * 2 - 1
+      target.y = (e.clientY / window.innerHeight) * 2 - 1
+    }
+    const onDown = () => {
+      press = 1
+    }
+    window.addEventListener('pointermove', onMove, { passive: true })
+    window.addEventListener('pointerdown', onDown)
+    const step = () => {
+      cur.x += (target.x - cur.x) * 0.08
+      cur.y += (target.y - cur.y) * 0.08
+      press *= 0.9
+      const el = videoRef.current
+      if (el && activeRef.current === 0) {
+        // 커서 쪽으로 이동 + 살짝 기울고, 클릭하면 눌리듯 살짝 물러난다
+        const scale = 1.1 - press * 0.025
+        el.style.transform = `scale(${scale}) translate(${cur.x * 42}px, ${cur.y * 26}px) rotate(${cur.x * 1.5}deg)`
+      }
+      raf = requestAnimationFrame(step)
+    }
+    raf = requestAnimationFrame(step)
+    return () => {
+      cancelAnimationFrame(raf)
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerdown', onDown)
+    }
+  }, [])
+
+  // 클릭 틱 기계음
+  useEffect(() => {
+    const onDown = () => audio.click()
+    window.addEventListener('pointerdown', onDown)
+    return () => window.removeEventListener('pointerdown', onDown)
   }, [])
 
   const navTo = (id: string) => {
@@ -607,9 +484,11 @@ export default function App() {
       <section id="home" ref={setSectionRef(0)} className="relative min-h-screen snap-start overflow-hidden">
         <video
           ref={(el) => {
+            videoRef.current = el
             if (el) el.muted = true
           }}
           className="absolute inset-0 w-full h-full object-cover"
+          style={{ transform: 'scale(1.1)', willChange: 'transform' }}
           src={VIDEO_URL}
           autoPlay
           muted
@@ -940,8 +819,6 @@ export default function App() {
         </div>
       </section>
 
-      {/* 마우스를 따라다니며 클릭하는 로봇 팔 */}
-      <RobotArm />
     </div>
   )
 }
